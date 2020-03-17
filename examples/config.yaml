@@ -1,0 +1,18 @@
+general:
+    seed: 2
+    module: test.py
+
+model:
+    pretrained: true
+    
+dataset:
+    - name: cifar10
+    - name: imagenet
+    
+
+gin:
+    'a_gin_configurable_fn.print_yes': true
+
+templating:
+    parent_yaml: examples/base.yaml
+    
