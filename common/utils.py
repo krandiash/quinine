@@ -127,3 +127,41 @@ def get_all_leaf_paths(coll):
                     )
     else:
         return [[]]
+
+
+def get_all_paths(coll, prefix_path=(), stop_at=None, stop_below=None):
+    """
+    Given a collection, by default returns paths to all the leaf nodes.
+    Use stop_at to truncate paths at the given key.
+    Use stop_below to truncate paths one level below the given key.
+    """
+    assert stop_at is None or stop_below is None, 'Only one of stop_at or stop_below can be used.'
+    if stop_below is not None and stop_below in str(last(butlast(prefix_path))):
+        return [[]]
+    if stop_at is not None and stop_at in str(last(prefix_path)):
+        return [[]]
+    if isinstance(coll, dict) or isinstance(coll, Munch) or isinstance(coll, list):
+        if isinstance(coll, dict) or isinstance(coll, Munch):
+            items = iteritems(coll)
+        else:
+            items = enumerate(coll)
+
+        return list(cat(map(lambda t: list(map(lambda p: [t[0]] + p,
+                                               get_all_paths(t[1],
+                                                             prefix_path=list(prefix_path) + [t[0]],
+                                                             stop_at=stop_at,
+                                                             stop_below=stop_below)
+                                               )),
+                            items))
+                    )
+    else:
+        return [[]]
+
+
+def get_only_paths(coll, pred, prefix_path=(), stop_at=None, stop_below=None):
+    """
+    Get all paths that satisfy the predicate fn pred.
+    First gets all paths and then filters them based on pred.
+    """
+    all_paths = get_all_paths(coll, prefix_path=prefix_path, stop_at=stop_at, stop_below=stop_below)
+    return list(filter(pred, all_paths))

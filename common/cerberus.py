@@ -192,11 +192,12 @@ def register_yaml_schemas(path):
     register_schemas(schema_names, schemas)
 
 
-def normalize_config(config, schema):
+def normalize_config(config, schema=None):
     """
     Execute a series of functions on the config that modify it.
     """
-    config = Validator(schema).normalized(config)
+    if schema:
+        config = Validator(schema).normalized(config)
     config = resolve_templating(config)
     if 'dataflow' in config:
         dataflow_config = propagate_parameters_to_datagroups(config.dataflow)

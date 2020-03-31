@@ -66,16 +66,19 @@ def prepare_config(config_path=None,
 
     # Load up the schema
     if schema is None:
-        assert schema_path is not None, 'Please pass in either schema or schema_path.'
-        assert schema_path.endswith('.yaml'), 'Must use a YAML file for the config.'
-        schema = yaml.load(open(schema_path),
-                           Loader=yaml.FullLoader)
+        if schema_path is not None:
+            assert schema_path.endswith('.yaml'), 'Must use a YAML file for the config.'
+            schema = yaml.load(open(schema_path),
+                               Loader=yaml.FullLoader)
 
-    # Allow gin configuration at any level of nesting: put a gin tag at every level of the schema
-    schema = autoexpand_schema(schema)
+    print(config)
 
-    # Validate the config against the schema
-    validate_config(config, schema)
+    if schema is not None:
+        # Allow gin configuration at any level of nesting: put a gin tag at every level of the schema
+        schema = autoexpand_schema(schema)
+
+        # Validate the config against the schema
+        validate_config(config, schema)
 
     # Normalize the config
     config = normalize_config(config, schema)
