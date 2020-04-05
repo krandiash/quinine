@@ -71,8 +71,6 @@ def prepare_config(config_path=None,
             schema = yaml.load(open(schema_path),
                                Loader=yaml.FullLoader)
 
-    print(config)
-
     if schema is not None:
         # Allow gin configuration at any level of nesting: put a gin tag at every level of the schema
         schema = autoexpand_schema(schema)

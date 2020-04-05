@@ -1,70 +1,55 @@
-import functools
 import itertools
 import re
+import typing as typ
 from collections import namedtuple
+from copy import deepcopy
 
 import cytoolz as tz
 from funcy import *
 from toposort import toposort
-import typing as typ
 
 from common.utils import get_only_paths, allequal
 from quinfig import Quinfig
 
-Parameter = namedtuple('Parameter', 'path dotpath value')
-SweptParameter = namedtuple('SweptParameter', 'path sweep')
+# Parameter = namedtuple('Parameter', 'path dotpath value')
+# SweptParameter = namedtuple('SweptParameter', 'path sweep')
 SweptDisjointParameter = namedtuple('SweptDisjointParameter', 'path disjoint')
 SweptProductParameter = namedtuple('SweptProductParameter', 'path product')
 SweptDefaultParameter = namedtuple('SweptDefaultParameter', 'path default')
 
 
-# def replace_underscore(self, dotpath, swept_parameters):
-#     # For convenience, create a lookup table for the swept parameters
-#     swept_parameters_dict = dict(zip(map(lambda sp: ".".join(sp.path), swept_parameters), swept_parameters))
-#
-#     # Parse the dotpath
-#     # TODO: rename things to dotpath and reference
-#     parsed = QuinSweep.parse_ref_dotpath(dotpath)
-#     print(dotpath, parsed)
-#     possibilities = []
-#     for i, (path, idx) in enumerate(parsed):
-#         if not idx == '_':
-#             possibilities.append([f'{path}.{idx}'])
-#             continue
-#         print(swept_parameters_dict.keys())
-#         assert one(lambda k: k.endswith(path), swept_parameters_dict.keys())
-#         print(list(map(lambda k: (k, k.endswith(path)), swept_parameters_dict.keys())))
-#         key = \
-#             list(
-#                 filter(lambda t: t[1] is True, map(lambda k: (k, k.endswith(path)), swept_parameters_dict.keys())))[
-#                 0][
-#                 0]
-#
-#         if i == 0:
-#             possibilities.append(
-#                 list(map(lambda e: f'{path}.{e}', range(len(list(swept_parameters_dict[key].sweep.values())[0])))))
-#         else:
-#             previous_path = ".".join(map(lambda t: ".".join(t), parsed[:i]))
-#             print(previous_path)
-#             found_loc = get_only_paths(swept_parameters_dict[key].sweep,
-#                                        pred=lambda p: any(lambda s: previous_path in str(s), p),
-#                                        stop_below=previous_path)[0]
-#             print(found_loc)
-#             print(len(get_in(swept_parameters_dict[key].sweep, found_loc)))
-#         # print(iffy(is_mapping, merge)())
-#         print(key)
-#     possibilities = list(map(lambda l: ".".join(l), list(itertools.product(*possibilities))))
-#     print(possibilities)
+class Parameter:
 
-# def replace_underscores(self, config, swept_parameters, swept_parameters_dict):
-#     print(swept_parameters)
-#     processed_swept_parameters = list(map(lambda sp: list(filter(is_mapping, sp.sweep.values())), swept_parameters))
-#     processed_swept_parameters = list(
-#         map(lambda e: list(merge(*e)) if len(e) > 0 else e, processed_swept_parameters))
-#     print(processed_swept_parameters)
-#     contains_underscore = list(map(lambda l: any(lambda k: '_' in k, l), processed_swept_parameters))
-#     print(contains_underscore)
-#     # contains_underscore = map(lambda sp: list(map((lambda k: '_' in k, sp.sweep.keys()))), map(lambda sp: list(merge(*list(filter(is_mapping, sp.sweep)))), swept_parameters))
+    def __init__(self, path=None, dotpath=None, value=None):
+        self.path = path
+        self.dotpath = dotpath
+        self.value = value
+
+    def __eq__(self, other):
+        if hasattr(other, 'dotpath'):
+            return self.dotpath == other.dotpath
+        else:
+            return self.dotpath == other
+
+    def __repr__(self):
+        return f'Parameter(path={self.path}, dotpath={self.dotpath}, value={self.value})'
+
+
+class SweptParameter:
+
+    def __init__(self, path=None, sweep=None):
+        self.path = path
+        self.sweep = sweep
+
+    def __getitem__(self, item):
+        if item == 0:
+            return self.path
+        elif item == 1:
+            return self.sweep
+
+    def __repr__(self):
+        return f'SweptParameter(path={self.path}, sweep={self.sweep})'
+
 
 class QuinSweep:
     """
@@ -122,6 +107,22 @@ class QuinSweep:
                               f'Only tokens {QuinSweep.SWEEP_TOKENS} are allowed.'
 
         return token_paths
+
+    @staticmethod
+    def parse_fixed_parameters(sweep_config):
+        # Extract the locations of the other non-swept, fixed parameters
+        # use the fact that the other parameters must not be prefixed by the special prefix
+        fixed_parameters = get_only_paths(sweep_config,
+                                          pred=lambda p: all(lambda s: QuinSweep.SWEEP_PREFIX not in str(s), p))
+        print(fixed_parameters)
+
+        # Make Parameter objects
+        fixed_parameters = list(map(lambda tp: Parameter(tp,
+                                                         f'{".".join(map(str, tp))}.0',
+                                                         get_in(sweep_config, tp)),
+                                    fixed_parameters)
+                                )
+        return fixed_parameters
 
     @staticmethod
     def path_to_dotpath(path: typ.List) -> str:
@@ -207,6 +208,14 @@ class QuinSweep:
         else:
             return 0
 
+    @staticmethod
+    def is_product_subtype(subtype):
+        return 'SweptProductParameter' in subtype.__name__
+
+    @staticmethod
+    def is_disjoint_subtype(subtype):
+        return 'SweptDisjointParameter' in subtype.__name__
+
     def expand_partial_dotpath(self, partial_dotpath):
         """
         Given a partial dotpath, expand the dotpath to yield a full dotpath from the root to the parameter.
@@ -248,6 +257,9 @@ class QuinSweep:
                                                    key=tuple)
                                           )
 
+        # Next, extract the fixed parameters from the sweep config
+        self.fixed_parameters = QuinSweep.parse_fixed_parameters(sweep_config)
+
         # Next, fetch the SweptParameter named tuples after creating them
         self.swept_parameters, \
         self.swept_disjoint_parameters, \
@@ -270,35 +282,25 @@ class QuinSweep:
         uncond_product_sweeps = list(filter(compose(is_seq, 1),
                                             self.swept_product_parameters))
 
-        print(uncond_disjoint_sweeps)
-        print(uncond_product_sweeps)
-
         self.all_combinations = self.process_unconditional_sweeps(uncond_disjoint_sweeps,
                                                                   uncond_product_sweeps)
-
-        print(self.all_combinations)
-
-        # Book-keeping
-        disjoint_param_groups_processed = [list(map(compose(".".join, 0), uncond_disjoint_sweeps))]
-        disjoint_params_processed = list(map(compose(".".join, 0), uncond_disjoint_sweeps))
-        product_param_groups_processed = [list(map(compose(".".join, 0), uncond_product_sweeps))]
-        product_params_processed = list(map(compose(".".join, 0), uncond_product_sweeps))
 
         # Filter out the conditional sweeps and then process them
         cond_disjoint_sweeps = list(filter(compose(is_mapping, 1), self.swept_disjoint_parameters))
         cond_product_sweeps = list(filter(compose(is_mapping, 1), self.swept_product_parameters))
-        print()
-        print(cond_disjoint_sweeps)
-        print(cond_product_sweeps)
-        print()
 
         self.process_conditional_sweeps(cond_disjoint_sweeps,
                                         cond_product_sweeps)
 
-        # create_quinfigs(sweep_config)
+        # Generate all the Quinfigs
+        self.quinfigs = []
+        for combination in self.all_combinations:
+            coll = deepcopy(sweep_config)
+            for parameter in combination:
+                coll = tz.assoc_in(coll, parameter.path, parameter.value)
+            self.quinfigs.append(Quinfig(config=coll))
 
-        # Create the Quinfig
-        # super(QuinSweep, self).__init__(config)
+        print(f"Generated {len(self.quinfigs)} quinfigs successfully.")
 
     def expand_all_condition_dotpaths(self):
         """
@@ -348,37 +350,6 @@ class QuinSweep:
                                                   self.swept_parameters),
                                               self.swept_parameters)
                                           )
-
-    # def replace_default(self, swept_parameter):
-    #     # Find all the references (i.e. dependencies) made by the swept_parameter
-    #     references = []
-    #     for token in QuinSweep.SWEEP_TOKENS[:-1]:  # omit default since it's value is never a dict
-    #         if f"~{token}" in swept_parameter.sweep and is_mapping(swept_parameter.sweep[f"~{token}"]):
-    #             references.extend(list(swept_parameter.sweep[f"~{token}"].keys()))
-    #
-    #     # Find all the referred parameters
-    #     parsed_references = list(map(QuinSweep.parse_ref_dotpath, references))
-    #     dotpaths = list(cat(parsed_references))
-    #     ref_dict = merge_with(compose(list, cat), *list(map(lambda e: dict([e]), dotpaths)))
-    #
-    #     assert all(map(lambda l: len(l) == len(set(l)), list(itervalues(ref_dict)))), \
-    #         'All conditions must be distinct.'
-    #
-    #     ref_dict_no_underscores = walk_values(compose(set,
-    #                                                   autocurry(map)(int),
-    #                                                   autocurry(filter)(lambda e: e != '_')),
-    #                                           ref_dict)
-    #
-    #     ref_dict_underscores = walk_values(compose(set,
-    #                                                autocurry(filter)(lambda e: e == '_')),
-    #                                        ref_dict)
-    #
-    #     print(parsed_references)
-    #     print(dotpaths, ref_dict_no_underscores, ref_dict_underscores)
-    #
-    #     if f'{self.SWEEP_PREFIX}default' not in swept_parameter.sweep:
-    #         # TODO: add some checks here
-    #         return swept_parameter
 
     def replace_underscores(self, swept_parameter):
         """
@@ -430,7 +401,7 @@ class QuinSweep:
         for parsed_ref in parsed_references:
 
             # Expand all the partial dotpaths
-            # TODO: remove?
+            # TODO: remove? expanding all the partial dotpaths in the beginning?
             parsed_ref = list(
                 map(lambda t: (self.expand_partial_dotpath(t[0]), t[1]), parsed_ref))
 
@@ -505,21 +476,18 @@ class QuinSweep:
         )
 
         # Topological sort to produce the partial ordering: a list of sets for the partial ordering
-        print("TOPO")
         sweep_posets = list(toposort(dependencies))
-        print(sweep_posets)
+
         # Map to extract the dotpaths of the sweeps
         dotpath_posets = list(map(lambda s: set(map(0, s)), sweep_posets))
-        print(dotpath_posets)
+
         # A dotpath could occur in more than one poset
         # e.g. when it contains both a product sweep and a disjoint sweep with different conditionals
         # Ensure that the dotpath occurs exactly once, in its earliest location
         dotpath_poset_subs = list(
             reversed(list(accumulate([set()] + list(reversed(dotpath_posets))[:-1], lambda a, b: a.union(b)))))
         dotpath_posets = list(map(lambda t: t[0] - t[1], zip(dotpath_posets, dotpath_poset_subs)))
-        print(dotpath_posets)
 
-        print(self.swept_parameters_dict)
         # Loop over all the sets in the partial order
         for poset in dotpath_posets:
             # For each path, convert it to a dotpath and then replace any underscores in it
@@ -527,18 +495,127 @@ class QuinSweep:
                 dotpath = QuinSweep.path_to_dotpath(path)
                 self.swept_parameters_dict[dotpath] = self.replace_underscores(self.swept_parameters_dict[dotpath])
 
-        print()
         for poset in sweep_posets:
-            for path, subtype in poset:
+            # Split the poset into the disjoint and product sweeps
+            disjoint_poset = [p for p in poset if QuinSweep.is_disjoint_subtype(p[1])]
+            product_poset = [p for p in poset if QuinSweep.is_product_subtype(p[1])]
+
+            # Process the product sweeps first
+            for path, subtype in product_poset:
                 dotpath = QuinSweep.path_to_dotpath(path)
-                # self.swept_parameters_dict[dotpath] = self.replace_default(self.swept_parameters_dict[dotpath])
-                print(subtype.__name__)
-                print(dotpath)
-                print(self.swept_parameters_dict[dotpath])
-            print()
+                # Each parameter combination needs to be expanded
+                # print("Product Expansion")
+                # for thing in self.all_combinations:
+                #     print([e.dotpath for e in thing])
+                self.all_combinations = self.product_expansion(self.all_combinations,
+                                                               dotpath,
+                                                               self.swept_parameters_dict[dotpath].sweep['~product'])
+
             # Process the poset
+            # For disjoint, process the entire poset together (restricted to the disjoint sweeps)
+            self.all_combinations = self.disjoint_expansion(self.all_combinations, disjoint_poset)
+
             pass
-        print(self.swept_parameters_dict)
+
+        # Apply the defaults
+        for poset in dotpath_posets:
+            # For each path, convert it to a dotpath and then replace any underscores in it
+            for path in poset:
+                for i, combo in enumerate(self.all_combinations):
+                    dotpath = QuinSweep.path_to_dotpath(path)
+                    if dotpath not in list(map(lambda c: self.path_to_dotpath(c.path), combo)):
+                        combo.append(Parameter(path,
+                                               f'{dotpath}.0',
+                                               self.swept_parameters_dict[dotpath].sweep['~default']))
+                        self.all_combinations[i] = combo
+
+    def product_expansion(self,
+                          combinations,
+                          dotpath,
+                          sweep):
+        """
+        Takes as input
+
+        """
+        new_combinations = []
+        # Iterate over the parameter combinations
+        for i, combo in enumerate(combinations):
+            # print(i, combo, sweep)
+            flag = False
+            # The parameter combination contains a setting of the previously configured parameters
+            for key in sweep:
+                # First parse the key, which is a reference dotpath, to a list of dotpaths
+                # Check if all the ref dotpaths are satisfied by the combo
+                if all(map(lambda t: ".".join(t) in combo, self.parse_ref_dotpath(key))):
+                    # Perform the product expansion
+                    new_combos = list(itertools.product(*list(map(lambda e: [e], combo)),
+                                                        list(
+                                                            map(lambda e: Parameter(self.dotpath_to_path(dotpath),
+                                                                                    f'{dotpath}.{e[0]}',
+                                                                                    e[1]),
+                                                                enumerate(sweep[key])
+                                                                )
+                                                        ))
+                                      )
+                    new_combos = list(map(compose(list, concat), new_combos))
+                    new_combinations.extend(new_combos)
+                    flag = True
+                    break
+            if not flag:
+                new_combinations.append(combo)
+
+        return new_combinations
+
+    def disjoint_expansion(self,
+                           combinations,
+                           poset):
+        """
+
+        """
+
+        ref_dotpath_to_dotpath = {}
+        for path, _ in poset:
+            # Look up the SweptParameter using the path
+            swept_param = self.swept_parameters_dict[self.path_to_dotpath(path)]
+            # Loop over the conditionals in the SweptParameter to create the lookup table
+            for ref_dotpath in swept_param.sweep['~disjoint']:
+                if ref_dotpath not in ref_dotpath_to_dotpath:
+                    ref_dotpath_to_dotpath[ref_dotpath] = set()
+                ref_dotpath_to_dotpath[ref_dotpath].add(swept_param)
+
+        new_combinations = []
+
+        # Iterate over the parameter combinations
+        for i, combo in enumerate(combinations):
+            # print(i, combo)
+            flag = False
+            # The parameter combination contains a setting of the previously configured parameters
+            for ref_dotpath in ref_dotpath_to_dotpath:
+                # First parse the key, which is a reference dotpath, to a list of dotpaths
+                # Check if all the ref dotpaths are satisfied by the combo
+                if all(map(lambda t: ".".join(t) in combo, self.parse_ref_dotpath(ref_dotpath))):
+                    disjoint_parameters = list(zip(*map(lambda sp: list(map(lambda v: Parameter(sp.path,
+                                                                                                f'{self.path_to_dotpath(sp.path)}.{v[0]}',
+                                                                                                v[1]),
+                                                                            enumerate(
+                                                                                sp.sweep['~disjoint'][ref_dotpath])
+                                                                            )
+                                                                        ),
+                                                        ref_dotpath_to_dotpath[ref_dotpath])
+                                                   ))
+
+                    new_combos = list(map(compose(list, cat), zip([combo] * len(disjoint_parameters),
+                                                                  disjoint_parameters)
+                                          )
+                                      )
+                    new_combinations.extend(new_combos)
+                    flag = True
+                    break
+
+            if not flag:
+                new_combinations.append(combo)
+
+        return new_combinations
 
     def process_unconditional_sweeps(self,
                                      uncond_disjoint_sweeps,
@@ -585,12 +662,24 @@ class QuinSweep:
         all_combinations = disjoint_uncond_combinations
 
         # Next, process the sequential product sweeps
-        product_uncond_combinations = list(itertools.product(
-            *map(lambda t: list(
-                map(lambda e: Parameter(t.path, f'{".".join(t.path)}.{e[0]}', e[1]), enumerate(t.product))),
-                 uncond_product_sweeps)))
+        product_uncond_combinations = list(
+            itertools.product(
+                *map(lambda t: list(
+                    map(lambda e: Parameter(t.path,
+                                            f'{".".join(t.path)}.{e[0]}',
+                                            e[1]),
+                        enumerate(t.product)
+                        )
+                ),
+                     uncond_product_sweeps)
+            )
+        )
         all_combinations = list(
-            map(compose(list, cat), itertools.product(all_combinations, product_uncond_combinations)))
+            map(compose(list, cat),
+                itertools.product(all_combinations,
+                                  product_uncond_combinations)
+                )
+        )
 
         return all_combinations
 
@@ -607,6 +696,7 @@ class QuinSweep:
         default_sweep_paths = list(filter(lambda s: 'default' in last(s), sweep_paths))
 
         # Construct SweptParameter and Swept__Parameter namedtuples,
+        # making it
         # consisting of the path to the parameter and its sweep configuration
         construct_swept_parameters = lambda subtype, paths, wrapper: list(
             map(lambda p: subtype(wrapper(p),
@@ -634,5 +724,7 @@ class QuinSweep:
 if __name__ == '__main__':
     sweep_config = Quinfig(
         config_path='/Users/krandiash/Desktop/workspace/projects/quinine/tests/derived-1-2.yaml')
+    # sweep_config = Quinfig(
+    #     config_path='/Users/krandiash/Desktop/workspace/projects/quinine/tests/derived-2.yaml')
 
     quin_sweep = QuinSweep(sweep_config=sweep_config)
