@@ -23,5 +23,5 @@ setup(
     keywords="configuration yaml machine learning ml ai nlp cv vision deep learning",
     # url="http://packages.python.org/an_example_pypi_project",
     packages=['quinine', ],
-    long_description=read('README'),
+    long_description=read('README.md'),
 )
