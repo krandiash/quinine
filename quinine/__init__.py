@@ -1,7 +1,7 @@
-from quinine.common.cerberus import create_and_register_schemas
+# from .quinfig import Quinfig
 #
 # Register all schemas
-create_and_register_schemas()
+# create_and_register_schemas()
 #
 # __all__ = ["quinfig"]
 # from .quinfig import Quinfig
