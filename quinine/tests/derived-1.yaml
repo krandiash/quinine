@@ -1,0 +1,13 @@
+templating:
+    parent_yaml: quinine/tests/base.yaml
+a:
+    b:
+        c:
+            d: 5
+            e:
+                ~product:
+                    - 2
+                    - 4
+                    - 6
+        f: 7
+        g: 1

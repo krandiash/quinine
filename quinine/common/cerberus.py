@@ -2,12 +2,9 @@ import glob
 import os
 
 import cytoolz.curried as tz
-import yaml
 from cerberus import schema_registry, Validator
-from funcy import *
-from munch import Munch
-from common.utils import *
-from common.gin import nested_scope_datagroup_gin_dict
+from quinine.common.utils import *
+from quinine.common.gin import nested_scope_datagroup_gin_dict
 
 tstring = {'type': 'string'}
 tinteger = {'type': 'integer'}

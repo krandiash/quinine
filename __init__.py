@@ -1,5 +1,4 @@
-from quinfig import Quinfig
-from common.cerberus import create_and_register_schemas
+from quinine.common.cerberus import create_and_register_schemas
 
 # Register all schemas
 create_and_register_schemas()

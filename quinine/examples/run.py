@@ -1,8 +1,8 @@
-from common.cerberus import *
-from common.gin import *
-import examples.simple
-from quinfig import Quinfig
-from examples.simple import simple_program
+from quinine.common.cerberus import *
+from quinine.common.gin import *
+import quinine.examples.simple
+from quinine.quinfig import Quinfig
+from quinine.examples.simple import simple_program
 
 
 def simple_example():
@@ -15,7 +15,7 @@ def simple_example():
                                }),
               }
 
-    # Internally, Quinfig autoupdates the schema using the autoexpand_schema function to support gin
+    # Internally, Quinfig will autoupdate this schema using the autoexpand_schema function to support gin
     prettyprint(autoexpand_schema(schema))
 
     # Write out the config: you could also have written this in a yaml file
@@ -23,7 +23,7 @@ def simple_example():
                           'module': 'test.py'},
               'model': {'pretrained': True},
               'gin':
-              # set the print_yes argument in a_gin_configurable_fn to True
+              # below, we set the print_yes argument in a_gin_configurable_fn to True
               # you can use as much or as little gin configuration as you like
               # e.g. you could write your entire configuration in gin or not use gin at all
                   {'a_gin_configurable_fn.print_yes': True},
@@ -33,7 +33,7 @@ def simple_example():
               }
 
     # Register the module that we want to configure with gin
-    register_module_with_gin(examples.simple, 'examples.simple')
+    register_module_with_gin(quinine.examples.simple, 'examples.simple')
 
     # Create the quinfig
     quinfig = Quinfig(config=config,

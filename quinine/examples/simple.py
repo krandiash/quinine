@@ -1,3 +1,8 @@
+"""
+A simple example program that we want to control using a configuration file.
+"""
+
+
 def a_gin_configurable_fn(print_yes):
     if print_yes:
         print("Yes")
@@ -10,4 +15,3 @@ def simple_program(quinfig):
     print(quinfig)
     print("Pay attention to what's being printed below.")
     a_gin_configurable_fn()
-

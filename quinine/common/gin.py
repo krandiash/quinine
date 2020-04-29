@@ -1,6 +1,6 @@
 import gin
 from funcy import *
-from common.utils import nested_dict_walker, prefix
+from quinine.common.utils import nested_dict_walker, prefix
 
 
 def register_module_with_gin(module, module_name=None):

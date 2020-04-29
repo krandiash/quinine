@@ -8,8 +8,8 @@ import cytoolz as tz
 from funcy import *
 from toposort import toposort
 
-from common.utils import get_only_paths, allequal
-from quinfig import Quinfig
+from quinine.common.utils import get_only_paths, allequal
+from quinine.quinfig import Quinfig
 
 # Parameter = namedtuple('Parameter', 'path dotpath value')
 # SweptParameter = namedtuple('SweptParameter', 'path sweep')
@@ -722,8 +722,10 @@ class QuinSweep:
 
 
 if __name__ == '__main__':
+    import os
+    print(os.getcwd())
     sweep_config = Quinfig(
-        config_path='/Users/krandiash/Desktop/workspace/projects/quinine/tests/derived-1-2.yaml')
+        config_path='quinine/tests/derived-1-2.yaml')
     # sweep_config = Quinfig(
     #     config_path='/Users/krandiash/Desktop/workspace/projects/quinine/tests/derived-2.yaml')
 

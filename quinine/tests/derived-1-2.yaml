@@ -1,0 +1,57 @@
+templating:
+    parent_yaml: quinine/tests/derived-1.yaml
+a:
+    b:
+        c:
+            d:
+                ~disjoint:
+                        - 17
+                        - 23
+                        - 33
+                        - 39
+            e:
+                ~product:
+                    d.0.m.1:
+                        - 2
+                        - 4
+                        - 6
+                    d._:
+                        - 1
+                        - 2
+                        - 3
+                ~default: 1
+        f:
+            ~disjoint:
+                    - 1
+                    - 2
+                    - 3
+                    - 4
+    h:
+        j: [-1, -2, -3]
+        l:
+            ~product:
+                    - 1
+                    - 2
+                    - 3
+        m:
+            ~disjoint:
+                d.0:
+                    - 0
+                    - 1
+                d.1:
+                    - 1
+                    - 2
+            ~default: 2
+        n:
+            ~disjoint:
+                d.0:
+                    - 0
+                    - 1
+            ~product:
+                d._:
+                    - 1
+                    - 2
+        o:
+            ~product:
+                    - 10
+                    - 11
