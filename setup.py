@@ -2,7 +2,7 @@
 Setup script for the Quinine library.
 """
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 # Utility function to read the README file.
@@ -22,6 +22,6 @@ setup(
     description="Quinine is a library for configuring machine learning projects.",
     keywords="configuration yaml machine learning ml ai nlp cv vision deep learning",
     # url="http://packages.python.org/an_example_pypi_project",
-    packages=['quinine', ],
+    packages=find_packages(),
     long_description=read('README.md'),
 )
