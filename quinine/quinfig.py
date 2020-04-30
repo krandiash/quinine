@@ -2,9 +2,9 @@
 Defines the main Quinfig class.
 """
 
-from quinine.common.cerberus import *
-from quinine.common.gin import *
-from quinine.common.utils import *
+from .common.cerberus import *
+from .common.gin import *
+from .common.utils import *
 
 # Register all schemas
 create_and_register_schemas()
