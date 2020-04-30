@@ -260,6 +260,12 @@ class QuinSweep:
         # First, extract the locations of the sweeps being performed
         self.sweep_paths = QuinSweep.parse_sweep_config(sweep_config)
 
+        if len(self.sweep_paths) == 0:
+            # No sweep: just return the single Quinfig
+            self.quinfigs = [Quinfig(config=sweep_config)]
+            print(f"Generated {len(self.quinfigs)} quinfig(s) successfully.")
+            return
+
         # Create list of paths to all the parameters that are being swept
         self.swept_parameter_paths = list(distinct(map(QuinSweep.get_parameter_path,
                                                        self.sweep_paths),
@@ -309,7 +315,7 @@ class QuinSweep:
                 coll = tz.assoc_in(coll, parameter.path, parameter.value)
             self.quinfigs.append(Quinfig(config=coll))
 
-        print(f"Generated {len(self.quinfigs)} quinfigs successfully.")
+        print(f"Generated {len(self.quinfigs)} quinfig(s) successfully.")
 
     def expand_all_condition_dotpaths(self):
         """
