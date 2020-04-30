@@ -22,6 +22,6 @@ setup(
     description="Quinine is a library for configuring machine learning projects.",
     keywords="configuration yaml machine learning ml ai nlp cv vision deep learning",
     # url="http://packages.python.org/an_example_pypi_project",
-    packages=find_packages(),
+    packages=['quinine', ],
     long_description=read('README.md'),
 )

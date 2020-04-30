@@ -14,5 +14,5 @@ gin:
     'a_gin_configurable_fn.print_yes': true
 
 templating:
-    parent_yaml: examples/base.yaml
+    parent_yaml: quinine/examples/base.yaml
     
