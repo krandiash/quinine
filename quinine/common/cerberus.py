@@ -8,6 +8,7 @@ from quinine.common.gin import nested_scope_datagroup_gin_dict
 
 tstring = {'type': 'string'}
 tinteger = {'type': 'integer'}
+tfloat = {'type': 'float'}
 tboolean = {'type': 'boolean'}
 tlist = {'type': 'list'}
 tdict = {'type': 'dict'}
