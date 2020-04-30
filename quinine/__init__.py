@@ -1,0 +1,1 @@
+from .quinfig import Quinfig
