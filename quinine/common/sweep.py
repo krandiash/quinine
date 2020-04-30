@@ -317,6 +317,12 @@ class QuinSweep:
 
         print(f"Generated {len(self.quinfigs)} quinfig(s) successfully.")
 
+    def __getitem__(self, idx):
+        """
+        Implement indexing into the QuinSweep to fetch particular Quinfigs.
+        """
+        return self.quinfigs[idx]
+
     def expand_all_condition_dotpaths(self):
         """
         Expands the paths
