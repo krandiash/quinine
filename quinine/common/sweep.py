@@ -5,6 +5,7 @@ from collections import namedtuple
 from copy import deepcopy
 
 import cytoolz as tz
+import yaml
 from funcy import *
 from toposort import toposort
 
@@ -248,6 +249,14 @@ class QuinSweep:
                  sweep_config=None,
                  schema=None
                  ):
+
+        # Load up the sweep config
+        if sweep_config is None:
+            assert sweep_config_path is not None, 'Please pass in either sweep_config or sweep_config_path.'
+            assert sweep_config_path.endswith('.yaml'), 'Must use a YAML file for the sweep_config.'
+            sweep_config = yaml.load(open(sweep_config_path),
+                                     Loader=yaml.FullLoader)
+
         # First, extract the locations of the sweeps being performed
         self.sweep_paths = QuinSweep.parse_sweep_config(sweep_config)
 
@@ -723,6 +732,7 @@ class QuinSweep:
 
 if __name__ == '__main__':
     import os
+
     print(os.getcwd())
     sweep_config = Quinfig(
         config_path='quinine/tests/derived-1-2.yaml')
