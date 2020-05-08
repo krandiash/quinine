@@ -1,11 +1,10 @@
 # Quinine
-Quinine is a no-nonsense library to create and manage configuration files (called _quinfigs_).
+Quinine is a no-nonsense, feature-rich library to create and manage configuration files (called _quinfigs_).
   
-It's especially well suited to machine learning (designed by an ML PhD student @ Stanford aka me), 
-where (i) the number of hyperparameters can be quite large; (ii) projects are always expanding, so hyperparameters keep growing;
-(iii) complicated hyperparameter sweeps are the norm.
-
-**I'm lazy like you, so Quinine is designed to be extremely simple to use and is quite feature-rich.** 
+It's especially well suited to machine learning projects (designed by an ML PhD student @ Stanford aka me) where, 
+- the number of hyperparameters can be quite large and are naturally nested
+- projects are always expanding, so hyperparameters grow
+- complicated manual hyperparameter sweeps are the norm 
 
 ## Features
 Quinine is simple, powerful and extensible: let's go over all of the features with lots of examples. 

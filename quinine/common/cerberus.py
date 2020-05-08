@@ -11,6 +11,7 @@ tinteger = {'type': 'integer'}
 tfloat = {'type': 'float'}
 tboolean = {'type': 'boolean'}
 tlist = {'type': 'list'}
+tlistorstring = {'type': ['list', 'string']}
 tdict = {'type': 'dict'}
 
 required = {'required': True}
@@ -21,6 +22,7 @@ schema = lambda s: {'schema': s}
 allowed = lambda a: {'allowed': a}
 
 stlist = lambda s: merge(tlist, schema(merge(tdict, schema(s))))
+stlistorstring = lambda s: merge(tlistorstring, schema(merge(tdict, schema(s))))
 stdict = lambda s: merge(tdict, schema(s))
 
 
@@ -129,6 +131,9 @@ def create_and_register_schemas():
     # Schema for templating
     templating = {'parent': merge(tstring, nullable, default(None))}
 
+    # Schema for inheritance
+    inherit = stlistorstring(merge(tstring, nullable, default(None)))
+
     # Collect all the schemas that are reusable
     schemas = {
         'general': general,
@@ -145,6 +150,7 @@ def create_and_register_schemas():
 
         'kubernetes': kubernetes,
         'templating': templating,
+        'inherit': inherit,
 
         'loader': loader,
         'datablock': datablock,
@@ -204,6 +210,40 @@ def normalize_config(config, schema=None):
     return config
 
 
+# def resolve_inheritance(config, base_path=''):
+#     """
+#     Takes in a config and resolves any inheritance.
+#     If inheriting, the config will have information about one or more parent configs that should be overwritten
+#     (those configs may in turn inherit from others).
+#     This inheritance chain is resolved by recursively merging all the relevant configs.
+#     """
+#     if 'inherit' not in config or ('inherit' in config and config['inherit'] is None):
+#         return config
+#
+#     def include_parents(l):
+#         """
+#         Append in the parents for a particular config.
+#         """
+#         # For each in config in l
+#         for cfg in l:
+#             if isinstance(cfg['inherit'], str):
+#                 return include_parents([yaml.load(open(os.path.join(base_path,
+#                                                                     cfg['inherit'])),
+#                                                   Loader=yaml.FullLoader)
+#                                         ]) + l
+#             elif isinstance(cfg['inherit'], list):
+#                 return [include_parents([yaml.load(open(os.path.join(base_path, par)),
+#                                                    Loader=yaml.FullLoader)])
+#                         for par in cfg['inherit']] + l
+#
+#     construct_hierarchy = lambda l: ignore(errors=Exception,
+#                                            default=include_parents(l)
+#                                            )(construct_hierarchy)(include_parents(l))
+#     config_hierarchy = construct_hierarchy([config])
+#     config = rmerge(*config_hierarchy)
+#     return config
+
+
 def resolve_templating(config, base_path=''):
     """
     Takes in a config and resolves any templating.
@@ -252,10 +292,24 @@ def expand_schema_for_gin_configuration(schema):
                               schema)
 
 
+def expand_schema_for_inheritance(schema):
+    """
+    Allows the schema to support inheritance.
+    The schema supports configs that (optionally) point to zero or more parent YAML configs
+    (using a path) that will be taken as base configurations to be overwritten.
+    """
+    return merge({'inherit': stlistorstring(merge(tstring,
+                                                  nullable,
+                                                  default(None))
+                                            )
+                  }, schema)
+
+
 def expand_schema_for_templating(schema):
     """
     Allows the schema to support templating.
     The schema supports configs that (optionally) point to a parent YAML config (using a path) that is being overwritten.
+    TODO: Deprecate.
     """
     return merge({'templating': stdict({'parent_yaml': merge(tstring,
                                                              nullable,
@@ -272,6 +326,7 @@ def autoexpand_schema(schema):
     """
     schema = expand_schema_for_gin_configuration(schema)
     schema = expand_schema_for_templating(schema)
+    schema = expand_schema_for_inheritance(schema)
     return schema
 
 
