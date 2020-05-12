@@ -45,7 +45,8 @@ class QuinineArgumentParser(ArgumentParser):
     def get_all_params(schema):
         # Find all leaf paths in the schema, then truncate the last key from each path
         # and remove the 'schema' key if it occurs anywhere in the path
-        candidate_parameters = list(set(map(lambda l: tuple(filter(lambda e: e != 'schema', l[:-1])),
+        # TODO: expand the list of criteria in the inner lambda
+        candidate_parameters = list(set(map(lambda l: tuple(filter(lambda e: e != 'schema' and e != 'allowed', l[:-1])),
                                             get_all_leaf_paths(schema))
                                         )
                                     )
@@ -85,4 +86,4 @@ class QuinineArgumentParser(ArgumentParser):
             quinfig = tz.assoc_in(quinfig, param_path, val)
 
         # Load the config again, this time with the schema
-        return Quinfig(config=quinfig, schema=self.schema)
+        return Quinfig(config=quinfig.__dict__, schema=self.schema)
