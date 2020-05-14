@@ -1,0 +1,61 @@
+general:
+    module: train.trainer
+
+dataset:
+    name: cimdb
+    version: orig
+    data_dir: /home/workspace/datasets/nlp/from_source/counterfactually-augmented-data/sentiment/
+    train:
+        batch_size: 16
+        shuffle_buffer: 1000
+
+augmentation:
+    name:
+        ~disjoint:
+            - null
+            - backtranslation
+            - substitution
+            - eda
+    variant:
+        ~product:
+            name.0:
+                - null
+            name._:
+                - a
+                - b
+                - both
+    model:
+        ~product:
+            name.1:
+                - en2de
+            name.2:
+                - glove
+                - roberta-base
+                - ppdb-s
+            name._:
+                - null
+                
+    num_aug:
+        ~product:
+            name.0:
+                - null
+            name._:
+                - 4
+                - 9
+    store_dir: /home/workspace/datasets/nlp/augmented/from_source/
+
+
+trainer:
+    epochs: 20
+    
+optimizer:
+    lr: 0.00001
+    
+model:
+    architecture: bert-base-uncased
+
+features:
+    max_length: 350
+
+wandb:
+    job_type: training

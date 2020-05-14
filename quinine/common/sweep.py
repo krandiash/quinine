@@ -156,7 +156,7 @@ class QuinSweep:
         split = dotpath.split(".")
 
         # Handle the case where the gin parameter has a dot
-        if split[-3] == 'gin':
+        if len(split) > 2 and split[-3] == 'gin':
             split = split[:-2] + [".".join(split[-2:])]
 
         return split
@@ -746,9 +746,12 @@ if __name__ == '__main__':
     import os
 
     print(os.getcwd())
+    # sweep_config = Quinfig(
+    #     config_path='quinine/tests/derived-1-2.yaml')
     sweep_config = Quinfig(
-        config_path='quinine/tests/derived-1-2.yaml')
+        config_path='tests/bugs/test.yaml')
     # sweep_config = Quinfig(
     #     config_path='/Users/krandiash/Desktop/workspace/projects/quinine/tests/derived-2.yaml')
 
     quin_sweep = QuinSweep(sweep_config=sweep_config)
+    print(quin_sweep.quinfigs)
