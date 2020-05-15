@@ -388,6 +388,7 @@ class QuinSweep:
         dotpaths = list(cat(parsed_references))
         ref_dict = merge_with(compose(list, cat), *list(map(lambda e: dict([e]), dotpaths)))
 
+        # TODO: there's a bug here potentially
         assert all(map(lambda l: len(l) == len(set(l)), list(itervalues(ref_dict)))), \
             'All conditions must be distinct.'
 
@@ -749,7 +750,7 @@ if __name__ == '__main__':
     # sweep_config = Quinfig(
     #     config_path='quinine/tests/derived-1-2.yaml')
     sweep_config = Quinfig(
-        config_path='tests/bugs/test.yaml')
+        config_path='tests/bugs/test-2.yaml')
     # sweep_config = Quinfig(
     #     config_path='/Users/krandiash/Desktop/workspace/projects/quinine/tests/derived-2.yaml')
 

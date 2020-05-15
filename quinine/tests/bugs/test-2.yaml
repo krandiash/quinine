@@ -1,0 +1,49 @@
+general:
+    module: train.augment
+
+dataset:
+    name: imdb
+    data_dir: /home/workspace/datasets/nlp/tensorflow/
+    version: null
+    
+augmentation:
+    name:
+        ~disjoint:
+            - backtranslation
+            - substitution
+            - eda
+    variant: a
+    model:
+        ~disjoint:
+            name.0:
+                - en2de
+            name.1:
+                - glove
+                - roberta-base
+                - ppdb-s
+            name.2:
+                - null
+                
+    model_dir:
+        ~disjoint:
+            name.0:
+                - /home/workspace/models/torchhub/
+            name.1:
+                - /home/workspace/models/nlpaug/
+                - null
+                - /home/workspace/models/nlpaug/
+            name.2:
+                - null
+    batch_size:
+        ~product:
+            name.0:
+                - 64
+        ~default: null
+    num_aug:
+        ~product:
+            - 4
+            - 9
+    store_dir: /home/workspace/datasets/nlp/augmented/tensorflow/
+
+wandb:
+    group: augmentation-imdb

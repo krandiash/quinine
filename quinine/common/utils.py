@@ -5,6 +5,35 @@ Some common utilities.
 import yaml
 from funcy import *
 from munch import Munch
+import cytoolz as tz
+
+
+def difference(*colls):
+    """
+    Find the keys that have different values in an arbitrary number of (nested) collections. Any key
+    that differs in at least 2 collections is considered to fit this criterion.
+    """
+
+    # Get all the leaf paths for each collection: make each path a tuple
+    leaf_paths_by_coll = list(map(lambda c: list(map(tuple, get_all_leaf_paths(c))), colls))
+
+    # Find the union of all leaf paths: merge all the paths and keep only the unique paths
+    union_leaf_paths = list(distinct(concat(*leaf_paths_by_coll)))
+
+    # Get the values corresponding to these leaf paths in every collection: if a leaf path doesn't exist, assumes None
+    values_by_coll = list(map(lambda lp: list(map(lambda coll: tz.get_in(lp, coll), colls)), union_leaf_paths))
+
+    # Filter out the leaf paths that have identical values across the collections
+    keep_leaf_paths = list(map(0, filter(lambda t: not allequal(t[1]), zip(union_leaf_paths, values_by_coll))))
+    keep_values = list(map(1, filter(lambda t: not allequal(t[1]), zip(union_leaf_paths, values_by_coll))))
+
+    # Rearrange to construct a list of dictionaries -- one per original collection.
+    # Each of these dictionaries maps a 'kept' leaf path to its corresponding
+    # value in the collection
+    differences = list(map(lambda vals: dict(zip(keep_leaf_paths, vals)), list(zip(*keep_values))))
+
+    return differences
+
 
 
 def rmerge(*colls):
@@ -165,3 +194,17 @@ def get_only_paths(coll, pred, prefix_path=(), stop_at=None, stop_below=None):
     """
     all_paths = get_all_paths(coll, prefix_path=prefix_path, stop_at=stop_at, stop_below=stop_below)
     return list(filter(pred, all_paths))
+
+if __name__ == '__main__':
+    coll1 = {'a': 1,
+             'b': 2,
+             'c': {'d': 12}}
+    coll2 = {'a': 1,
+             'b': 2,
+             'c': {'d': 13}}
+    coll3 = {'a': 1,
+             'b': 3,
+             'c': {'d': 14},
+             'e': 4}
+
+    difference(coll1, coll2, coll3)
