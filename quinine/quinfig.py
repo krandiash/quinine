@@ -61,6 +61,10 @@ def prepare_config(config_path=None,
         config = yaml.load(open(config_path),
                            Loader=yaml.FullLoader)
 
+    # If the config is a Quinfig object, just grab the __dict__ for convenience
+    if isinstance(config, Quinfig):
+        config = config.__dict__
+
     # Convert config to Munch: iffy ensures that the Munch fn is only applied to mappings
     config = walk_values_rec(iffy(is_mapping, lambda c: Munch(**c)), config)
 
