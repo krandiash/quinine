@@ -165,21 +165,22 @@ def create_and_register_schemas():
     }
 
     # Register the schemas
-    register_schemas(*list(zip(*schemas.items())))
+    register_schemas(*list(zip(*schemas.items())), verbose=False)
 
     return schemas
 
 
-def register_schemas(schema_names, schemas):
+def register_schemas(schema_names, schemas, verbose=True):
     """
     Register a list of schemas, with corresponding names.
     """
     # Register the schemas
     list(map(lambda n, s: schema_registry.add(n, s), schema_names, schemas))
 
-    # Print
-    print("Registered schemas in Cerberus: ")
-    list(map(lambda n: print(f'- {n}'), schema_names))
+    if verbose:
+        # Print
+        print("Registered schemas in Cerberus: ")
+        list(map(lambda n: print(f'- {n}'), schema_names))
 
 
 def register_yaml_schemas(path):
