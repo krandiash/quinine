@@ -115,7 +115,6 @@ class QuinSweep:
         # use the fact that the other parameters must not be prefixed by the special prefix
         fixed_parameters = get_only_paths(sweep_config,
                                           pred=lambda p: all(lambda s: QuinSweep.SWEEP_PREFIX not in str(s), p))
-        print(fixed_parameters)
 
         # Make Parameter objects
         fixed_parameters = list(map(lambda tp: Parameter(tp,
