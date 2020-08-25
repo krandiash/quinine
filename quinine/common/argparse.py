@@ -86,4 +86,4 @@ class QuinineArgumentParser(ArgumentParser):
             quinfig = tz.assoc_in(quinfig, param_path, val)
 
         # Load the config again, this time with the schema
-        return Quinfig(config=quinfig.__dict__, schema=self.schema)
+        return Quinfig(config=dict(quinfig), schema=self.schema)
