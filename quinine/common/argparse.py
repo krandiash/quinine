@@ -30,12 +30,12 @@ class QuinineArgumentParser(ArgumentParser):
         self.add_argument('--config', type=str, required=True, help="YAML configuration file.")
         self.schema = schema
 
-        # Populate the argument parser with arguments from the schema
-        paths_to_type = list(filter(lambda l: l[-1] == 'type', get_all_leaf_paths(self.schema)))
-        type_lookup = dict([(tuple(filter(lambda e: e != 'schema', e[:-1])), tz.get_in(e, schema))
-                            for e in paths_to_type])
-
         if self.schema is not None:
+            # Populate the argument parser with arguments from the schema
+            paths_to_type = list(filter(lambda l: l[-1] == 'type', get_all_leaf_paths(self.schema)))
+            type_lookup = dict([(tuple(filter(lambda e: e != 'schema', e[:-1])), tz.get_in(e, schema))
+                                for e in paths_to_type])
+
             valid_params = self.get_all_params(schema)
             for param in valid_params:
                 self.add_argument(f'--{".".join(param)}',
