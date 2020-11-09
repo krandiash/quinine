@@ -22,15 +22,15 @@ def req_file(filename):
 install_requires = req_file("requirements.txt")
 
 setup(
-    name="Quinine",
-    version="0.1dev",
+    name="quinine",
+    version="0.1.1",
     author="Karan Goel",
     author_email="kgoel93@gmail.com",
-    license="BSD",
-    description="Quinine is a library for configuring machine learning projects.",
+    license="MIT",
+    description="quinine is a library for configuring machine learning projects.",
     keywords="configuration yaml machine learning ml ai nlp cv vision deep learning",
     # url="http://packages.python.org/an_example_pypi_project",
     packages=['quinine', 'quinine.common'],
-    long_description=read('README.md'),
+    # long_description=read('README.md'),
     install_requires=install_requires,
 )

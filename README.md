@@ -6,11 +6,21 @@ It's especially well suited to machine learning projects (designed by an ML PhD 
 - projects are always expanding, so hyperparameters grow
 - complicated manual hyperparameter sweeps are the norm 
 
+## Installation
+Install using pip,
+```shell script
+pip install quinine
+```
+For the latest version, 
+```shell script
+pip install git+https://github.com/krandiash/quinine.git --upgrade
+```
+
 ## Features
 Quinine is simple, powerful and extensible: let's go over all of the features with lots of examples. 
 
 ### Configuration in YAML
-Configs are called Quinfigs (why not). The most basic thing you can do is to create a _Quinfig_ using a yaml file. 
+Configs are called Quinfigs. The most basic thing you can do is to create a _Quinfig_ using a yaml file. 
 
 Here's an example where we use a `config.yaml` file to create a Quinfig. The only rule is you can't prefix any key
 with the `~` character because we'll use that for sweeps.
