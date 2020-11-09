@@ -1,3 +1,4 @@
+import sys as _sys
 from argparse import ArgumentParser
 
 import cytoolz as tz
@@ -72,7 +73,7 @@ class QuinineArgumentParser(ArgumentParser):
         args = self.parse_args()
 
         cli_keys = []
-        for cli_arg in sys.argv[1:]:
+        for cli_arg in _sys.argv[1:]:
             if cli_arg.startswith('--'):
                 if str(cli_arg) == '--config':
                     continue
