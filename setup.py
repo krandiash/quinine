@@ -23,7 +23,7 @@ install_requires = req_file("requirements.txt")
 
 setup(
     name="quinine",
-    version="0.1.1",
+    version="0.1.2",
     author="Karan Goel",
     author_email="kgoel93@gmail.com",
     license="MIT",

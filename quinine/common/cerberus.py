@@ -204,6 +204,7 @@ def normalize_config(config, schema=None):
     if schema:
         config = Validator(schema).normalized(config)
     config = resolve_templating(config)
+    config = resolve_inheritance(config)
     if 'dataflow' in config:
         dataflow_config = propagate_parameters_to_datagroups(config.dataflow)
         config = set_in(config, ['dataflow'], dataflow_config)
@@ -211,38 +212,49 @@ def normalize_config(config, schema=None):
     return config
 
 
-# def resolve_inheritance(config, base_path=''):
-#     """
-#     Takes in a config and resolves any inheritance.
-#     If inheriting, the config will have information about one or more parent configs that should be overwritten
-#     (those configs may in turn inherit from others).
-#     This inheritance chain is resolved by recursively merging all the relevant configs.
-#     """
-#     if 'inherit' not in config or ('inherit' in config and config['inherit'] is None):
-#         return config
-#
-#     def include_parents(l):
-#         """
-#         Append in the parents for a particular config.
-#         """
-#         # For each in config in l
-#         for cfg in l:
-#             if isinstance(cfg['inherit'], str):
-#                 return include_parents([yaml.load(open(os.path.join(base_path,
-#                                                                     cfg['inherit'])),
-#                                                   Loader=yaml.FullLoader)
-#                                         ]) + l
-#             elif isinstance(cfg['inherit'], list):
-#                 return [include_parents([yaml.load(open(os.path.join(base_path, par)),
-#                                                    Loader=yaml.FullLoader)])
-#                         for par in cfg['inherit']] + l
-#
-#     construct_hierarchy = lambda l: ignore(errors=Exception,
-#                                            default=include_parents(l)
-#                                            )(construct_hierarchy)(include_parents(l))
-#     config_hierarchy = construct_hierarchy([config])
-#     config = rmerge(*config_hierarchy)
-#     return config
+def resolve_inheritance(config, base_path=''):
+    """
+    Takes in a config and resolves any inheritance.
+    If inheriting, the config will have information about one or more parent configs that should be overwritten
+    (those configs may in turn inherit from others).
+    This inheritance chain is resolved by recursively merging all the relevant configs.
+    """
+    if 'inherit' not in config or ('inherit' in config and config['inherit'] is None):
+        return config
+
+    inherit_paths = [config['inherit']] if isinstance(config['inherit'], str) else config['inherit']
+    inherit_configs = [
+        # Recurse to resolve inheritance for each inherited config
+        resolve_inheritance(
+            yaml.load(open(os.path.join(base_path, inherit_path)),
+                      Loader=yaml.FullLoader)
+        )
+        for inherit_path in inherit_paths
+    ]
+    print(inherit_configs)
+
+    # def include_parents(l):
+    #     """
+    #     Append in the parents for a particular config.
+    #     """
+    #     # For each in config in l
+    #     for cfg in l:
+    #         if isinstance(cfg['inherit'], str):
+    #             return include_parents([yaml.load(open(os.path.join(base_path,
+    #                                                                 cfg['inherit'])),
+    #                                               Loader=yaml.FullLoader)
+    #                                     ]) + l
+    #         elif isinstance(cfg['inherit'], list):
+    #             return [include_parents([yaml.load(open(os.path.join(base_path, par)),
+    #                                                Loader=yaml.FullLoader)])
+    #                     for par in cfg['inherit']] + l
+
+    # construct_hierarchy = lambda l: ignore(errors=Exception,
+    #                                        default=include_parents(l)
+    #                                        )(construct_hierarchy)(include_parents(l))
+    # config_hierarchy = construct_hierarchy([config])
+    config = rmerge(*inherit_configs, config)
+    return config
 
 
 def resolve_templating(config, base_path=''):
