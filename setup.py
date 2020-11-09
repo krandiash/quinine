@@ -13,6 +13,14 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
+def req_file(filename):
+    with open(filename) as f:
+        content = f.readlines()
+    return [x.strip() for x in content]
+
+
+install_requires = req_file("requirements.txt")
+
 setup(
     name="Quinine",
     version="0.1dev",
@@ -24,4 +32,5 @@ setup(
     # url="http://packages.python.org/an_example_pypi_project",
     packages=['quinine', 'quinine.common'],
     long_description=read('README.md'),
+    install_requires=install_requires,
 )
