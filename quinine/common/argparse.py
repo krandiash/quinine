@@ -94,7 +94,7 @@ class QuinineArgumentParser(ArgumentParser):
 
         # Replace all the arguments passed into command line
         if len(override_args) > 0:
-            print(f"Overriding parameters in {args.config} from command line (___ is unspecified).")
+            print(f"\n(quinine) Overriding parameters in {args.config} from command line (___ is unspecified).")
 
         for param, val in override_args.items():
             param_path = param.split(".")
@@ -106,5 +106,6 @@ class QuinineArgumentParser(ArgumentParser):
                 print(f"> ({param}): ___ --> {val}")
             quinfig = tz.assoc_in(quinfig, param_path, val)
 
+        print()
         # Load the config again, this time with checking against the schema
         return Quinfig(config=dict(quinfig), schema=self.schema)
