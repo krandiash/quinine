@@ -197,14 +197,14 @@ def register_yaml_schemas(path):
     register_schemas(schema_names, schemas)
 
 
-def normalize_config(config, schema=None):
+def normalize_config(config, schema=None, base_path=''):
     """
     Execute a series of functions on the config that modify it.
     """
     if schema:
         config = Validator(schema).normalized(config)
     config = resolve_templating(config)
-    config = resolve_inheritance(config)
+    config = resolve_inheritance(config, base_path=base_path)
     if 'dataflow' in config:
         dataflow_config = propagate_parameters_to_datagroups(config.dataflow)
         config = set_in(config, ['dataflow'], dataflow_config)
@@ -223,36 +223,19 @@ def resolve_inheritance(config, base_path=''):
         return config
 
     inherit_paths = [config['inherit']] if isinstance(config['inherit'], str) else config['inherit']
+    inherit_paths = [os.path.abspath(os.path.join(base_path, inherit_path)) for inherit_path in inherit_paths]
+    config['inherit'] = inherit_paths
+
     inherit_configs = [
         # Recurse to resolve inheritance for each inherited config
         resolve_inheritance(
-            yaml.load(open(os.path.join(base_path, inherit_path)),
-                      Loader=yaml.FullLoader)
+            yaml.load(open(inherit_path),
+                      Loader=yaml.FullLoader),
+            base_path=os.path.dirname(inherit_path),
         )
         for inherit_path in inherit_paths
     ]
-    print(inherit_configs)
 
-    # def include_parents(l):
-    #     """
-    #     Append in the parents for a particular config.
-    #     """
-    #     # For each in config in l
-    #     for cfg in l:
-    #         if isinstance(cfg['inherit'], str):
-    #             return include_parents([yaml.load(open(os.path.join(base_path,
-    #                                                                 cfg['inherit'])),
-    #                                               Loader=yaml.FullLoader)
-    #                                     ]) + l
-    #         elif isinstance(cfg['inherit'], list):
-    #             return [include_parents([yaml.load(open(os.path.join(base_path, par)),
-    #                                                Loader=yaml.FullLoader)])
-    #                     for par in cfg['inherit']] + l
-
-    # construct_hierarchy = lambda l: ignore(errors=Exception,
-    #                                        default=include_parents(l)
-    #                                        )(construct_hierarchy)(include_parents(l))
-    # config_hierarchy = construct_hierarchy([config])
     config = rmerge(*inherit_configs, config)
     return config
 

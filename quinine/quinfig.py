@@ -27,7 +27,6 @@ class Quinfig(Munch):
                  config=None,
                  schema=None
                  ):
-
         # Prepare the config
         config = prepare_config(config_path=config_path,
                                 schema_path=schema_path,
@@ -83,7 +82,8 @@ def prepare_config(config_path=None,
         validate_config(config, schema)
 
     # Normalize the config
-    config = normalize_config(config, schema)
+    config = normalize_config(config, schema,
+                              base_path=os.path.dirname(os.path.abspath(config_path)) if config_path else '')
 
     # Parse and load the gin configuration
     nested_gin_dict_parser(config)
