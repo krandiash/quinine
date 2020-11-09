@@ -1,10 +1,9 @@
-import sys
 from argparse import ArgumentParser
 
 import cytoolz as tz
 from funcy import *
 
-from quinine.common.utils import rmerge, difference
+from quinine.common.utils import rmerge
 from quinine.quinfig import Quinfig
 from quinine.quinfig import get_all_leaf_paths
 
