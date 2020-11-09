@@ -1,7 +1,10 @@
+import sys
 from argparse import ArgumentParser
-from funcy import *
-import cytoolz as tz
 
+import cytoolz as tz
+from funcy import *
+
+from quinine.common.utils import rmerge, difference
 from quinine.quinfig import Quinfig
 from quinine.quinfig import get_all_leaf_paths
 
@@ -66,24 +69,42 @@ class QuinineArgumentParser(ArgumentParser):
         return valid_parameters
 
     def parse_quinfig(self):
-        # Parse all the arguments
+        # Parse all the arguments from the command line, overriding defaults in the argparse
         args = self.parse_args()
-        override_args = dict(select_values(lambda v: v is not None,
-                                           omit(args.__dict__, ['config'])
-                                           )
-                             )
+
+        cli_keys = []
+        for cli_arg in sys.argv[1:]:
+            if cli_arg.startswith('--'):
+                if str(cli_arg) == '--config':
+                    continue
+                cli_keys.append(cli_arg[2:].replace("-", "_"))
+            elif cli_arg.startswith('-'):
+                raise NotImplementedError("QuinineArgumentParser doesn't support abbreviated arguments.")
+            else:
+                continue
+
+        # Get parameters which need to be overridden from command line
+        override_args = project(args.__dict__, cli_keys)
 
         # Trick: first load the config without a schema
         quinfig = Quinfig(config_path=args.config)
 
+        # Override all the defaults using the yaml config
+        quinfig = rmerge(Quinfig(config=args.__dict__), quinfig)
+
         # Replace all the arguments passed into command line
         if len(override_args) > 0:
-            print(f"Overriding arguments in {args.config} from command line.")
+            print(f"Overriding parameters in {args.config} from command line (___ is unspecified).")
+
         for param, val in override_args.items():
             param_path = param.split(".")
             old_val = tz.get_in(param_path, quinfig)
-            print(f"> ({param}): {old_val} --> {val}")
+
+            if old_val != val:
+                print(f"> ({param}): {old_val} --> {val}")
+            else:
+                print(f"> ({param}): ___ --> {val}")
             quinfig = tz.assoc_in(quinfig, param_path, val)
 
-        # Load the config again, this time with the schema
-        return Quinfig(config=quinfig.__dict__ if isinstance(quinfig, Quinfig) else quinfig, schema=self.schema)
+        # Load the config again, this time with checking against the schema
+        return Quinfig(config=dict(quinfig), schema=self.schema)
