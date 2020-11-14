@@ -68,12 +68,12 @@ YAMLs are great for writing large, nested configs cleanly, and provide a nice se
 
 Read on to see more! 
 
-### Templating for variation
+### Inheritance for configs
 A common use-case in machine learning is performing sweeps or variants on an experiment. 
-It's often convenient to have to specify _only_ the parameters that need to be changed from a 'base' or template config. 
+It's often convenient to have to specify _only_ the parameters that need to be changed from some 'base' or template configs. 
 
 
-Quinine provides support for templating, using the special `templating` key in the config. 
+Quinine provides support for inheritance, using the special `inherit` key in the config. 
 
 Here's an example, where we 
 - first specify a base config called `grandparent.yaml`,
@@ -98,8 +98,7 @@ dataset:
 
 #### **`parent.yaml (how you write it)`** 
 ```yaml 
-templating:
-    parent_yaml: path/to/grandparent.yaml 
+inherit: path/to/grandparent.yaml 
 
 # Overwrites the dataset configuration in grandparent.yaml to only train on CIFAR-10
 dataset:
@@ -110,8 +109,7 @@ dataset:
 
 #### **`parent.yaml (how it actually is)`** 
 ```yaml 
-templating:
-    parent_yaml: path/to/grandparent.yaml 
+inherit: path/to/grandparent.yaml 
 
 general:
     seed: 2
@@ -127,8 +125,7 @@ dataset:
 
 #### **`config.yaml (how you write it)`** 
 ```yaml 
-templating:
-    parent_yaml: path/to/parent.yaml 
+inherit: path/to/parent.yaml 
 
 # Overwrites the model configuration in parent.yaml (which equals its value in grandparent.yaml) to set pretrained to False
 model:
@@ -139,8 +136,7 @@ model:
 
 #### **`config.yaml (how it actually is)`** 
 ```yaml 
-templating:
-    parent_yaml: path/to/parent.yaml 
+inherit: path/to/parent.yaml 
 
 general:
     seed: 2
@@ -163,7 +159,27 @@ quinfig = Quinfig(config_path='path/to/config.yaml')
 assert quinfig.model.pretrained == False
 assert quinfig.model.architecture == 'resnet50'
 ```
-Recursive templating with arbitrary depth and branching is supported!
+
+You can also inherit from multiple configs simultaneously (later configs take precedence). Here's an example,
+
+#### **`config.yaml`**
+```yaml
+inherit: 
+    - path/to/parent_1.yaml
+    - path/to/parent_2.yaml
+    - path/to/parent_3.yaml # later parameters take precedence  
+
+general:
+    seed: 2
+    module: test.py
+
+model:
+    pretrained: false
+    architecture: resnet50
+
+dataset:
+    - name: cifar10
+```
 
 
 ### Cerberus schemas for validation
@@ -198,8 +214,8 @@ general_schema = {'seed': merge(tinteger, default(0)),
 
 # The overall schema is composed of these three reusable schemas
 # Notice that you don't need to provide a schema for templating, Quinine will take care of that
-schema = {'general': schema(general_schema), 
-          'model': schema(model_schema), 
+schema = {'general': stdict(general_schema), 
+          'model': stdict(model_schema), 
           'dataset': stlist(dataset_schema)}
 
 # Just pass in the schema while instantiating the Quinfig: validation happens automatically
@@ -235,8 +251,6 @@ all from the convenience of YAML.
 
 Secondly, you can make your codebase gin configurable without having to manually decorate every function as `@gin.configurable`. 
 This lets you switch to/away from gin without any hassles.
-
-Let's see this in action.
 
 
 ### QuinSweeps: YAML Sweeping on Steroids
@@ -361,55 +375,6 @@ optimizer:
                 - cosine
                 - linear
 ```
-
-Scenario: sweep over all possible combinations of 4 learning rates and 4 architectures and if architecture is resnet50,
-additionally sweep over 2 learning rate schedulers and 2 layer normalization candidates.
-```yaml
-model:
-    pretrained: false
-    architecture:
-        # Sweep over 4 separate learning rates 
-        ~disjoint: 
-            - resnet18
-            - resnet50
-            - vgg19
-            - inceptionv3
-
-optimizer:
-    learning_rate: 
-        # Sweep over 4 separate learning rates
-        ~disjoint:
-            - 0.01
-            - 0.001
-            - 0.0001
-            - 0.00001
-    scheduler: cosine
-```
-
-Scenario: sweep over all possible combinations of 4 learning rates and 4 architectures and if architecture is resnet50 
-```yaml
-model:
-    pretrained: false
-    architecture:
-        # Sweep over 4 separate learning rates 
-        ~disjoint: 
-            - resnet18
-            - resnet50
-            - vgg19
-            - inceptionv3
-
-optimizer:
-    learning_rate: 
-        # Sweep over 4 separate learning rates
-        ~disjoint:
-            - 0.01
-            - 0.001
-            - 0.0001
-            - 0.00001
-    scheduler: cosine
-```
-
-
 
 
 
