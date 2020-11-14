@@ -128,8 +128,8 @@ dataset:
 inherit: path/to/parent.yaml 
 
 # Overwrites the model configuration in parent.yaml (which equals its value in grandparent.yaml) to set pretrained to False
-model:
-	pretrained: false
+model: 
+    pretrained: false
 
 # All other configuration options are inherited from parent.yaml
 ```
