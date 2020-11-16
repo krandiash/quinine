@@ -85,9 +85,10 @@ def prepare_config(config_path=None,
         validate_config(config, schema)
 
     # Normalize the config
-    base_path = os.path.abspath(base_path)
     if not base_path:
         base_path = os.path.dirname(os.path.abspath(config_path)) if config_path else ''
+    else:
+        base_path = os.path.abspath(base_path)
     config = normalize_config(config, schema, base_path=base_path)
 
     # Parse and load the gin configuration
