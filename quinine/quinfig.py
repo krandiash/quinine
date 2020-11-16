@@ -25,13 +25,15 @@ class Quinfig(Munch):
                  config_path=None,
                  schema_path=None,
                  config=None,
-                 schema=None
+                 schema=None,
+                 base_path=None,
                  ):
         # Prepare the config
         config = prepare_config(config_path=config_path,
                                 schema_path=schema_path,
                                 config=config,
-                                schema=schema)
+                                schema=schema,
+                                base_path=base_path)
 
         # Create the Quinfig
         super(Quinfig, self).__init__(config)
@@ -48,7 +50,8 @@ class Quinfig(Munch):
 def prepare_config(config_path=None,
                    schema_path=None,
                    config=None,
-                   schema=None) -> Munch:
+                   schema=None,
+                   base_path=None) -> Munch:
     """
     Takes in paths to config and schema files.
     Validates the config against the schema, normalizes the config, parses gin and converts the config to a Munch.
@@ -82,8 +85,10 @@ def prepare_config(config_path=None,
         validate_config(config, schema)
 
     # Normalize the config
-    config = normalize_config(config, schema,
-                              base_path=os.path.dirname(os.path.abspath(config_path)) if config_path else '')
+    base_path = os.path.abspath(base_path)
+    if not base_path:
+        base_path = os.path.dirname(os.path.abspath(config_path)) if config_path else ''
+    config = normalize_config(config, schema, base_path=base_path)
 
     # Parse and load the gin configuration
     nested_gin_dict_parser(config)

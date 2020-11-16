@@ -1,5 +1,6 @@
 import itertools
 import re
+import os
 import typing as typ
 from collections import namedtuple
 from copy import deepcopy
@@ -312,7 +313,7 @@ class QuinSweep:
             coll = deepcopy(sweep_config)
             for parameter in combination:
                 coll = tz.assoc_in(coll, parameter.path, parameter.value)
-            self.quinfigs.append(Quinfig(config=coll))
+            self.quinfigs.append(Quinfig(config=coll, base_path=os.path.dirname(os.path.abspath(sweep_config_path))))
 
         print(f"Generated {len(self.quinfigs)} quinfig(s) successfully.")
 
