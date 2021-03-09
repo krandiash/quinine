@@ -119,6 +119,5 @@ class QuinineArgumentParser(ArgumentParser):
                 print(f"> ({param}): ___ --> {val}")
             quinfig = tz.assoc_in(quinfig, param_path, val)
 
-        print()
         # Load the config again
-        return Quinfig(config=dict(quinfig), schema=self.schema)
+        return Quinfig(config=quinfig, schema=self.schema)

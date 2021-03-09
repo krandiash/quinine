@@ -91,6 +91,9 @@ def prepare_config(config_path=None,
         base_path = os.path.abspath(base_path)
     config = normalize_config(config, schema, base_path=base_path)
 
+    # Convert config to Munch: iffy ensures that the Munch fn is only applied to mappings
+    config = walk_values_rec(iffy(is_mapping, lambda c: Munch(**c)), config)
+
     # Parse and load the gin configuration
     nested_gin_dict_parser(config)
 
