@@ -200,6 +200,8 @@ Another reason to use schemas: you can mark parameters as required, specify defa
 -- 
 
 ```python
+from quinine import Quinfig, tstring, tboolean, tinteger, stdict, stlist, default, nullable, required
+from funcy import merge
 # You should write schemas in Python for reusability (recommended)
 
 # The model schema contains a single 'pretrained' bool parameter that is required
@@ -225,33 +227,27 @@ quinfig = Quinfig(config_path='path/to/config.yaml', schema=schema)
 quinfig = Quinfig(config_path='path/to/config.yaml', schema_path='path/to/schema')
 ```
 
-
-
-### Gin for sophisticated configuration
-`Gin` is a feature-rich configuration library that gives users the ability to directly force a function argument 
-in their code to take on some value. 
-
-This can be especially useful when configuration files have nested dependencies: 
-e.g. consider a config with an `optimizer` key that dictates which optimizer is built and used. 
-Each optimizer (e.g. SGD or Adam) has its own configuration options (e.g. momentum for SGD or beta_1, beta_2 for Adam).
+### QuinineArgumentParser: Override Command-Line Arguments
+Quinine also comes with an argument parser that can be used to perform command-line
+ overrides on top of arguments specified in a config `.yaml` file.
  
-With gin, you avoid having to create a schema that specifies every parameter for every possible optimizer in your 
-config file (and/or writing boilerplate code to parse all of this).
+ ```python
+from quinine import QuinineArgumentParser
+parser = QuinineArgumentParser(schema=your_schema) # a schema is necessary if you want to override command-line arguments
+quinfig = parser.parse_quinfig()
+# Do stuff
+``` 
 
-Instead, you can mark functions as gin configurable (e.g. torch.optim.Adam and torch.optim.SGD) and 
-simply set the arguments for the one you'll be using, directly in the config e.g. `torch.optim.Adam.beta_1 = 0.5`. 
-When you need to use the optimizer, just use `torch.optim.Adam()` (and gin will take care of specifying the parameters).
-No need to parse this gin configuration manually!
+To use this, you can run
+```shell script
+# Load config from `your_config.yaml` and override `nested_arg.nesting.parameter` with
+# a new value = 'abc'
+> python your_file.py --config your_config.yaml --nested_arg.nesting.parameter abc
+# ...and so on
+> python your_file.py --config your_config.yaml --arg1 2 --arg2 'abc' --nested.arg a
+```
 
-Quinine provides a thin wrapper on gin that allows users to perform gin configuration in YAML, 
-without having to commit to gin completely (which can be cumbersome). 
-
-With Quinine you can choose not to perform any gin configuration, use it a only a little or even use gin only, 
-all from the convenience of YAML. 
-
-Secondly, you can make your codebase gin configurable without having to manually decorate every function as `@gin.configurable`. 
-This lets you switch to/away from gin without any hassles.
-
+Note that `your_config.yaml` can inherit from an arbitrary number of configs.
 
 ### QuinSweeps: YAML Sweeping on Steroids
 Quinine has a _very_ powerful syntax for sweeps. One of the problems this aims to address is that
@@ -284,10 +280,10 @@ optimizer:
 ```
 
 ```python
-from quinine.quinfig import QuinSweep
+from quinine import QuinSweep
 
 # Generate a QuinSweep using this YAML
-quinsweep = QuinSweep(path='path/to/sweep_config.yaml')
+quinsweep = QuinSweep(sweep_config_path='path/to/sweep_config.yaml')
 
 # Index into the quinsweep to get the i^th Quinfig
 i = 3
@@ -376,5 +372,46 @@ optimizer:
                 - linear
 ```
 
+### Gin for sophisticated configuration
+`Gin` is a feature-rich configuration library that gives users the ability to directly force a function argument 
+in their code to take on some value. 
+
+This can be especially useful when configuration files have nested dependencies: 
+e.g. consider a config with an `optimizer` key that dictates which optimizer is built and used. 
+Each optimizer (e.g. SGD or Adam) has its own configuration options (e.g. momentum for SGD or beta_1, beta_2 for Adam).
+ 
+With gin, you avoid having to create a schema that specifies every parameter for every possible optimizer in your 
+config file (and/or writing boilerplate code to parse all of this).
+
+Instead, you can mark functions as gin configurable (e.g. torch.optim.Adam and torch.optim.SGD) and 
+simply set the arguments for the one you'll be using, directly in the config e.g. `torch.optim.Adam.beta_1 = 0.5`. 
+When you need to use the optimizer, just use `torch.optim.Adam()` (and gin will take care of specifying the parameters).
+No need to parse this gin configuration manually!
+
+Quinine provides a thin wrapper on gin that allows users to perform gin configuration in YAML, 
+without having to commit to gin completely (which can be cumbersome). 
+
+With Quinine you can choose not to perform any gin configuration, use it a only a little or even use gin only, 
+all from the convenience of YAML. 
+
+Secondly, you can make your codebase gin configurable without having to manually decorate every function as `@gin.configurable`. 
+This lets you switch to/away from gin without any hassles.
 
 
+### About
+If you use `quinine` in a research paper, please use the following BibTeX entry
+```
+@misc{Goel2021,
+  author = {Karan Goel},
+  title = {Quinine: Configuration for Machine Learning Projects},
+  year = {2021},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/krandiash/quinine}},
+}
+```
+
+### Acknowledgments
+Thanks to Tri Dao and Albert Gu for initial discussions that led to the development
+ of `quinine`, as well as Kabir Goel, Shreya Rajpal, Laurel Orr and Sidd
+  Karamcheti for providing valuable feedback.
