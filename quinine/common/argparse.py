@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 import cytoolz as tz
 from funcy import *
 
+from quinine.common.cerberus import tstring, tlist
 from quinine.common.utils import rmerge
 from quinine.quinfig import Quinfig
 from quinine.quinfig import get_all_leaf_paths
@@ -43,6 +44,8 @@ class QuinineArgumentParser(ArgumentParser):
             for param in valid_params:
                 self.add_argument(f'--{".".join(param)}',
                                   type=self.types[type_lookup[param]])
+
+        self.schema = merge(self.schema, {'config': tstring, 'inherit': tlist})
 
     @staticmethod
     def get_all_params(schema):
@@ -86,11 +89,21 @@ class QuinineArgumentParser(ArgumentParser):
         # Get parameters which need to be overridden from command line
         override_args = project(args.__dict__, cli_keys)
 
-        # Trick: first load the config without a schema
-        quinfig = Quinfig(config_path=args.config)
+        # Trick: first load the config without a schema as a base config
+        # quinfig = Quinfig(config_path=args.config)
 
         # Override all the defaults using the yaml config
-        quinfig = rmerge(Quinfig(config=args.__dict__), quinfig)
+        # quinfig = rmerge(Quinfig(config=args.__dict__), quinfig)
+        # print(quinfig)
+
+        # Use all the defaults in args to populate a dictionary
+        quinfig = {}
+        for param, val in args.__dict__.items():
+            param_path = param.split(".")
+            quinfig = tz.assoc_in(quinfig, param_path, val)
+
+        # Override all the defaults using the yaml config
+        quinfig = rmerge(quinfig, Quinfig(config_path=args.config))
 
         # Replace all the arguments passed into command line
         if len(override_args) > 0:
@@ -107,5 +120,5 @@ class QuinineArgumentParser(ArgumentParser):
             quinfig = tz.assoc_in(quinfig, param_path, val)
 
         print()
-        # Load the config again, this time with checking against the schema
+        # Load the config again
         return Quinfig(config=dict(quinfig), schema=self.schema)
