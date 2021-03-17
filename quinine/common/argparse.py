@@ -45,10 +45,7 @@ class QuinineArgumentParser(ArgumentParser):
                 self.add_argument(f'--{".".join(param)}',
                                   type=self.types[type_lookup[param]])
 
-        self.schema = merge(
-            self.schema if self.schema is not None else {},
-            {'config': tstring, 'inherit': tlist}
-        )
+            self.schema = merge(self.schema, {'config': tstring, 'inherit': tlist})
 
     @staticmethod
     def get_all_params(schema):
