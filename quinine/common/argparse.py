@@ -1,5 +1,6 @@
 import sys as _sys
 from argparse import ArgumentParser
+from distutils.util import strtobool
 
 import cytoolz as tz
 from funcy import *
@@ -23,7 +24,7 @@ class QuinineArgumentParser(ArgumentParser):
              'integer': int,
              'float': float,
              'dict': dict,
-             'boolean': bool,
+             'boolean': lambda x: bool(strtobool(x)),
              'list': list,
              }
 
